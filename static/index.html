@@ -12,6 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/static/styles.css" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -92,10 +94,38 @@
     <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
     <main id="main-content">
 
-      <!-- ── Room cards grid ── -->
-      <section id="rooms-grid">
-        <!-- Populated by JS -->
-      </section>
+      <!-- Left content area: Visuals and Room cards -->
+      <div class="content-left">
+        <!-- ── Real-time Visuals section ── -->
+        <section id="dashboard-visuals">
+          <!-- Graph Panel -->
+          <div class="visual-panel graph-panel">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 3v18h18M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Real-Time Power Usage
+            </div>
+            <div class="chart-container">
+              <canvas id="power-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Interactive Layout Panel -->
+          <div class="visual-panel layout-panel">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 3h18v18H3zM9 3v18M3 9h18M3 15h18" stroke="currentColor" stroke-width="2"/></svg>
+              Office Layout
+            </div>
+            <div id="office-layout" class="office-layout">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Room cards grid ── -->
+        <section id="rooms-grid">
+          <!-- Populated by JS -->
+        </section>
+      </div>
 
       <!-- ── Alerts sidebar ── -->
       <aside id="alerts-panel">

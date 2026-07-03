@@ -8,7 +8,7 @@ Evaluates two rules after every device state change:
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Callable, Coroutine
 
 from backend.config import (
@@ -81,14 +81,29 @@ async def _check_office_hours() -> None:
 
 _room_all_on_start: dict[str, datetime | None] = {}
 
+
+def _office_start_utc(now_local: datetime, now_utc: datetime) -> datetime:
+    office_start_local = now_local.replace(
+        hour=OFFICE_HOURS_START,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    return now_utc - (now_local - office_start_local)
+
+
 async def _check_long_running_rooms() -> None:
     now_local = db.get_current_time()
     now_utc = db.get_current_utc_time()
 
     # Only evaluate during office hours
     if not (OFFICE_HOURS_START <= now_local.hour < OFFICE_HOURS_END):
+        for room in ROOMS:
+            db.resolve_alerts_for_condition(room, "All devices have been ON")
         _room_all_on_start.clear()
         return
+
+    office_start = _office_start_utc(now_local, now_utc)
 
     for room in ROOMS:
         room_devices = db.get_devices_by_room(room)
@@ -101,9 +116,12 @@ async def _check_long_running_rooms() -> None:
         msg = f"{room}: All devices have been ON for 2+ hours"
 
         if all_on:
-            # Set the timer start time to when all devices became ON (i.e. the latest change time)
-            if _room_all_on_start.get(room) is None:
-                _room_all_on_start[room] = max(d.last_changed for d in room_devices)
+            all_on_since = max(d.last_changed for d in room_devices)
+            timer_start = max(all_on_since, office_start)
+            tracked_start = _room_all_on_start.get(room)
+
+            if tracked_start is None or tracked_start < timer_start:
+                _room_all_on_start[room] = timer_start
 
             duration = (now_utc - _room_all_on_start[room]).total_seconds()
 
@@ -120,8 +138,6 @@ async def _check_long_running_rooms() -> None:
                     logger.info("🚨 Alert: %s", msg)
                     if _discord_alert_callback:
                         await _discord_alert_callback(alert)
-                # Reset the timer after the alert has fired
-                _room_all_on_start[room] = now_utc
         else:
             _room_all_on_start[room] = None
             db.resolve_alerts_for_condition(room, "All devices have been ON")
