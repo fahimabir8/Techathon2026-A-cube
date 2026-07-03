@@ -1,0 +1,21 @@
+[project]
+name = "techathon2026-a-cube"
+version = "1.0.0"
+description = "Smart Office Device Monitoring System — Real-time dashboard & Discord bot for monitoring simulated office electrical devices"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "discord-py>=2.3.0",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+]
