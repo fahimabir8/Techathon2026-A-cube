@@ -388,9 +388,16 @@ body {
   border-color: var(--border-glass);
 }
 
+/* ── ON state (green) ── */
 .device-tile.device-on {
   border-color: rgba(16, 185, 129, 0.3);
   background: rgba(16, 185, 129, 0.08);
+}
+
+/* ── OFF state (red) ── */
+.device-tile.device-off {
+  border-color: rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.06);
 }
 
 .device-tile-icon {
@@ -401,23 +408,41 @@ body {
   place-items: center;
   font-size: 1.15rem;
   flex-shrink: 0;
-  background: rgba(100, 116, 139, 0.2);
   transition: all var(--transition);
 }
 
+/* Icon backgrounds per state */
 .device-tile.device-on .device-tile-icon {
   background: rgba(16, 185, 129, 0.25);
+  color: var(--accent-emerald);
+}
+.device-tile.device-off .device-tile-icon {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--accent-rose);
 }
 
-/* Fan spinning */
-.device-tile.device-on .device-tile-icon.icon-fan {
-  animation: spin 1.8s linear infinite;
+/* Fan propeller SVG sizing */
+.device-tile-icon.icon-fan .fan-propeller {
+  width: 22px;
+  height: 22px;
+  transform-origin: center;
+}
+
+/* Fan spinning when ON */
+.device-tile.device-on .device-tile-icon.icon-fan .fan-propeller {
+  animation: spin 1.2s linear infinite;
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* Light glowing */
+/* Fan muted when OFF */
+.device-tile.device-off .device-tile-icon.icon-fan {
+  color: var(--accent-rose);
+  opacity: 0.6;
+}
+
+/* Light glowing when ON */
 .device-tile.device-on .device-tile-icon.icon-light {
   box-shadow: 0 0 14px rgba(245, 158, 11, 0.5), 0 0 30px rgba(245, 158, 11, 0.2);
   background: rgba(245, 158, 11, 0.3);
@@ -447,33 +472,15 @@ body {
   color: var(--accent-emerald);
 }
 
-.device-tile-toggle {
-  width: 36px;
-  height: 20px;
-  border-radius: 100px;
-  background: rgba(100, 116, 139, 0.3);
-  position: relative;
-  flex-shrink: 0;
-  transition: background var(--transition);
+.device-tile.device-off .device-tile-status {
+  color: var(--accent-rose);
 }
-.device-tile-toggle::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--text-secondary);
-  transition: all var(--transition);
+
+/* Light icon greyed out when OFF */
+.device-tile-icon.icon-light.icon-off {
+  filter: grayscale(1) opacity(0.45);
 }
-.device-tile.device-on .device-tile-toggle {
-  background: var(--accent-emerald);
-}
-.device-tile.device-on .device-tile-toggle::after {
-  left: 19px;
-  background: #fff;
-}
+
 
 
 /* ═══════════════ ALERTS PANEL ═══════════════ */
@@ -571,129 +578,7 @@ body {
 }
 
 
-/* ═══════════════ FLOOR PLAN (Bonus) ═══════════════ */
-#floor-plan-section {
-  margin-top: 36px;
-  position: relative;
-  z-index: 1;
-}
 
-.section-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  color: var(--text-secondary);
-}
-.section-title svg { color: var(--accent-indigo); }
-
-.floor-plan {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  border-radius: var(--radius-lg);
-  border: var(--glass-border);
-  padding: 24px;
-  box-shadow: var(--shadow-card);
-  position: relative;
-}
-.floor-plan::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(6, 182, 212, 0.04));
-  pointer-events: none;
-}
-
-.fp-room {
-  border-radius: var(--radius-md);
-  border: 2px dashed rgba(148, 163, 184, 0.15);
-  padding: 18px;
-  min-height: 160px;
-  transition: border-color var(--transition), background var(--transition);
-  position: relative;
-}
-.fp-room:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  background: rgba(99, 102, 241, 0.03);
-}
-.fp-room.room-all-on {
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.03);
-}
-
-.fp-room-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.fp-devices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.fp-device {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 1.2rem;
-  background: rgba(100, 116, 139, 0.15);
-  border: 2px solid transparent;
-  transition: all var(--transition);
-  cursor: default;
-  position: relative;
-}
-
-.fp-device.fp-on {
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-.fp-device.fp-fan.fp-on {
-  animation: spin 1.8s linear infinite;
-  background: rgba(99, 102, 241, 0.2);
-  border-color: rgba(99, 102, 241, 0.45);
-}
-
-.fp-device.fp-light.fp-on {
-  background: rgba(245, 158, 11, 0.25);
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
-}
-
-.fp-device-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  border: 1px solid var(--border-glass);
-  z-index: 10;
-}
-.fp-device:hover .fp-device-tooltip {
-  opacity: 1;
-}
 
 
 /* ═══════════════ TOAST ═══════════════ */
@@ -764,9 +649,7 @@ body {
   #rooms-grid {
     grid-template-columns: 1fr;
   }
-  .floor-plan {
-    grid-template-columns: 1fr;
-  }
+
   #metrics-strip {
     grid-template-columns: repeat(2, 1fr);
   }

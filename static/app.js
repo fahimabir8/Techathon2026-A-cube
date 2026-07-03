@@ -57,17 +57,7 @@
   const $clock        = document.getElementById("clock");
   const $toasts       = document.getElementById("toast-container");
 
-  // Floor-plan containers
-  const fpContainers = {
-    "Drawing Room":  document.getElementById("fp-devices-drawing"),
-    "Work Room 1":   document.getElementById("fp-devices-work1"),
-    "Work Room 2":   document.getElementById("fp-devices-work2"),
-  };
-  const fpRooms = {
-    "Drawing Room": document.getElementById("fp-drawing"),
-    "Work Room 1":  document.getElementById("fp-work1"),
-    "Work Room 2":  document.getElementById("fp-work2"),
-  };
+
 
   // ── Room visual config ─────────────────────────────────────────────────────
   const ROOM_META = {
@@ -174,10 +164,9 @@
 
       renderMetrics();
       renderAlerts();
-      // Re-render only the affected room card + floor plan
+      // Re-render only the affected room card
       if (updated) {
         renderRoomCard(updated.room);
-        renderFloorPlanRoom(updated.room);
       }
     }
   }
@@ -191,7 +180,6 @@
     renderMetrics();
     renderRooms();
     renderAlerts();
-    renderFloorPlan();
   }
 
   // ── Metrics ────────────────────────────────────────────────────────────────
@@ -274,22 +262,37 @@
 
   function buildDeviceTile(dev) {
     const tile = document.createElement("div");
-    tile.className = `device-tile${dev.status ? " device-on" : ""}`;
+    tile.className = `device-tile${dev.status ? " device-on" : " device-off"}`;
     tile.id = `tile-${dev.id}`;
 
     const iconClass = dev.type === "fan" ? "icon-fan" : "icon-light";
-    const emoji = DEVICE_EMOJI[dev.type] || "⚙️";
     const statusText = dev.status
       ? `ON · ${dev.power_draw.toFixed(1)}W`
       : "OFF";
 
+    // SVG propeller for fans, emoji for lights
+    let iconContent;
+    if (dev.type === "fan") {
+      iconContent = `<svg class="fan-propeller" viewBox="0 0 64 64" fill="currentColor" width="22" height="22">
+        <circle cx="32" cy="32" r="5"/>
+        <ellipse cx="32" cy="14" rx="6" ry="14" />
+        <ellipse cx="50" cy="32" rx="14" ry="6" />
+        <ellipse cx="32" cy="50" rx="6" ry="14" />
+        <ellipse cx="14" cy="32" rx="14" ry="6" />
+      </svg>`;
+    } else {
+      iconContent = DEVICE_EMOJI[dev.type] || "⚙️";
+    }
+
+    // Apply grey style to light icon when device is OFF
+    const offClass = (!dev.status && dev.type === "light") ? " icon-off" : "";
+
     tile.innerHTML = `
-      <div class="device-tile-icon ${iconClass}">${emoji}</div>
+      <div class="device-tile-icon ${iconClass}${offClass}">${iconContent}</div>
       <div class="device-tile-info">
         <div class="device-tile-name">${dev.name}</div>
         <div class="device-tile-status">${statusText}</div>
       </div>
-      <div class="device-tile-toggle"></div>
     `;
 
     tile.addEventListener("click", () => toggleDevice(dev.id));
@@ -331,35 +334,7 @@
     }
   }
 
-  // ── Floor plan ─────────────────────────────────────────────────────────────
-  function renderFloorPlan() {
-    for (const room of Object.keys(fpContainers)) {
-      renderFloorPlanRoom(room);
-    }
-  }
 
-  function renderFloorPlanRoom(roomName) {
-    const container = fpContainers[roomName];
-    const fpRoom    = fpRooms[roomName];
-    if (!container || !fpRoom) return;
-
-    const roomDevices = devices.filter(d => d.room === roomName);
-    container.innerHTML = "";
-
-    const allOn = roomDevices.length > 0 && roomDevices.every(d => d.status);
-    fpRoom.classList.toggle("room-all-on", allOn);
-
-    for (const dev of roomDevices) {
-      const el = document.createElement("div");
-      const typeClass = dev.type === "fan" ? "fp-fan" : "fp-light";
-      el.className = `fp-device ${typeClass}${dev.status ? " fp-on" : ""}`;
-      el.innerHTML = `
-        ${DEVICE_EMOJI[dev.type] || "⚙️"}
-        <span class="fp-device-tooltip">${dev.name} — ${dev.status ? "ON" : "OFF"}</span>
-      `;
-      container.appendChild(el);
-    }
-  }
 
 
   // ═════════════════════════════════════════════════════════════════════════
