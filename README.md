@@ -209,10 +209,11 @@ Techathon2026-A-cube/
 
 ## 👥 Team A-Cube
 
-| Name | Email | Phone |
-|------|-------|-------|
-| Nafisa Rahman | nafisa.rahman@yahoo.com | +8801812345678 |
-| Tanvir Hossain | tanvir.hossain@yahoo.com | +8801912345678 |
+| Name |
+|------|
+| Abdullah Al Muaz|
+| Asfaqur Rahman Khan |
+| Md. Fahim Hossain Abir |
 
 ---
 
