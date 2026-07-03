@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Office Monitor — Real-Time Dashboard</title>
+  <meta name="description" content="Real-time monitoring dashboard for smart office electrical devices with live power tracking and alerts." />
+
+  <!-- Google Fonts — Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+  <!-- ───── Ambient background blobs ───── -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <div id="app">
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header id="main-header">
+      <div class="header-left">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none"><rect x="2" y="8" width="28" height="18" rx="3" stroke="currentColor" stroke-width="2"/><path d="M8 8V5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v3" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="17" r="4" stroke="currentColor" stroke-width="2"/><path d="M16 13v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <h1>Smart Office Monitor</h1>
+          <p class="subtitle">Techathon 2026 — Team A-Cube</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="office-hours-badge" class="badge badge-info">
+          <span class="badge-dot"></span>
+          <span id="office-hours-text">Checking…</span>
+        </div>
+        <div id="connection-badge" class="badge badge-warning">
+          <span class="badge-dot"></span>
+          <span id="connection-text">Connecting…</span>
+        </div>
+        <div id="clock" class="clock">--:--:--</div>
+      </div>
+    </header>
+
+    <!-- ═══════════════ METRICS STRIP ═══════════════ -->
+    <section id="metrics-strip">
+      <div class="metric-card metric-total" id="metric-total-power">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Total Power</span>
+          <span class="metric-value" id="total-power-value">0 W</span>
+        </div>
+      </div>
+
+      <div class="metric-card" id="metric-daily">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Est. Daily</span>
+          <span class="metric-value" id="daily-kwh-value">0.00 kWh</span>
+        </div>
+      </div>
+
+      <div class="metric-card" id="metric-devices-on">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Devices ON</span>
+          <span class="metric-value" id="devices-on-value">0 / 15</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-alerts" id="metric-alerts">
+        <div class="metric-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2"/><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="metric-body">
+          <span class="metric-label">Active Alerts</span>
+          <span class="metric-value" id="alerts-count-value">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+    <main id="main-content">
+
+      <!-- ── Room cards grid ── -->
+      <section id="rooms-grid">
+        <!-- Populated by JS -->
+      </section>
+
+      <!-- ── Alerts sidebar ── -->
+      <aside id="alerts-panel">
+        <div class="panel-header">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Alerts
+          </h2>
+          <span class="alert-badge" id="alert-badge-count">0</span>
+        </div>
+        <div id="alerts-list" class="alerts-list">
+          <div class="alert-empty">No active alerts</div>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- ═══════════════ FLOOR PLAN (Bonus) ═══════════════ -->
+    <section id="floor-plan-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Office Floor Plan
+      </h2>
+      <div id="floor-plan" class="floor-plan">
+        <div class="fp-room" id="fp-drawing" data-room="Drawing Room">
+          <span class="fp-room-label">Drawing Room</span>
+          <div class="fp-devices" id="fp-devices-drawing"></div>
+        </div>
+        <div class="fp-room" id="fp-work1" data-room="Work Room 1">
+          <span class="fp-room-label">Work Room 1</span>
+          <div class="fp-devices" id="fp-devices-work1"></div>
+        </div>
+        <div class="fp-room" id="fp-work2" data-room="Work Room 2">
+          <span class="fp-room-label">Work Room 2</span>
+          <div class="fp-devices" id="fp-devices-work2"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ── Toast container ── -->
+  <div id="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
