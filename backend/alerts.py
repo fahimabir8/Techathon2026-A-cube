@@ -39,45 +39,56 @@ async def check_all_alerts() -> None:
 
 
 # ── Rule 1: Office-hours ──────────────────────────────────────────────────────
+#   One alert per individual device that is ON outside 09:00–17:00.
+#   Message is stable per device so duplicates are impossible.
 
 async def _check_office_hours() -> None:
-    now = datetime.now()
+    now = db.get_current_time()
 
     if OFFICE_HOURS_START <= now.hour < OFFICE_HOURS_END:
-        # Within office hours → auto-resolve stale after-hours alerts
+        # Within office hours → resolve every after-hours alert
         for room in ROOMS:
             db.resolve_alerts_for_condition(room, "after office hours")
         return
 
-    # Outside office hours — flag every ON device
+    # Outside office hours — one alert per ON device
     for room in ROOMS:
-        on_devices = [d for d in db.get_devices_by_room(room) if d.status]
-        if on_devices:
-            names = ", ".join(d.name for d in on_devices)
-            message = (
-                f"{room}: {len(on_devices)} device(s) still ON after office hours "
-                f"— {names}"
-            )
-            alert = Alert(
-                id=str(uuid.uuid4()),
-                message=message,
-                timestamp=datetime.now(timezone.utc),
-                room=room,
-                severity=Severity.WARNING,
-            )
-            added = db.add_alert(alert)
-            if added:
-                logger.info("🔔 Alert: %s", message)
-                if _discord_alert_callback:
-                    await _discord_alert_callback(alert)
-        else:
-            db.resolve_alerts_for_condition(room, "after office hours")
+        for dev in db.get_devices_by_room(room):
+            # Stable message keyed to this specific device
+            msg = f"{dev.name} in {room} is ON after office hours"
+
+            if dev.status:
+                alert = Alert(
+                    id=str(uuid.uuid4()),
+                    message=msg,
+                    timestamp=db.get_current_utc_time(),
+                    room=room,
+                    severity=Severity.WARNING,
+                )
+                added = db.add_alert(alert)
+                if added:
+                    logger.info("🔔 Alert: %s", msg)
+                    if _discord_alert_callback:
+                        await _discord_alert_callback(alert)
+            else:
+                # Device is OFF → resolve its specific alert if any
+                db.resolve_alerts_for_condition(room, msg)
 
 
-# ── Rule 2: Long-running room ────────────────────────────────────────────────
+# ── Rule 2: Long-running room (office hours only) ────────────────────────────
+#   Fires when ALL devices in a room have been ON for ≥ 2 hours
+#   during office hours. Uses a stable message so no duplicates.
+
+_room_all_on_start: dict[str, datetime | None] = {}
 
 async def _check_long_running_rooms() -> None:
-    now = datetime.now(timezone.utc)
+    now_local = db.get_current_time()
+    now_utc = db.get_current_utc_time()
+
+    # Only evaluate during office hours
+    if not (OFFICE_HOURS_START <= now_local.hour < OFFICE_HOURS_END):
+        _room_all_on_start.clear()
+        return
 
     for room in ROOMS:
         room_devices = db.get_devices_by_room(room)
@@ -86,26 +97,33 @@ async def _check_long_running_rooms() -> None:
 
         all_on = all(d.status for d in room_devices)
 
+        # Stable message — no changing hour count
+        msg = f"{room}: All devices have been ON for 2+ hours"
+
         if all_on:
-            oldest = min(d.last_changed for d in room_devices)
-            duration = (now - oldest).total_seconds()
+            # Set the timer start time to when all devices became ON (i.e. the latest change time)
+            if _room_all_on_start.get(room) is None:
+                _room_all_on_start[room] = max(d.last_changed for d in room_devices)
+
+            duration = (now_utc - _room_all_on_start[room]).total_seconds()
 
             if duration >= LONG_RUNNING_THRESHOLD_SECONDS:
-                hours = round(duration / 3600, 1)
-                message = (
-                    f"{room}: All devices have been ON for {hours}+ hours"
-                )
                 alert = Alert(
                     id=str(uuid.uuid4()),
-                    message=message,
-                    timestamp=datetime.now(timezone.utc),
+                    message=msg,
+                    timestamp=now_utc,
                     room=room,
                     severity=Severity.CRITICAL,
                 )
                 added = db.add_alert(alert)
                 if added:
-                    logger.info("🚨 Alert: %s", message)
+                    logger.info("🚨 Alert: %s", msg)
                     if _discord_alert_callback:
                         await _discord_alert_callback(alert)
+                # Reset the timer after the alert has fired
+                _room_all_on_start[room] = now_utc
         else:
+            _room_all_on_start[room] = None
             db.resolve_alerts_for_condition(room, "All devices have been ON")
+
+

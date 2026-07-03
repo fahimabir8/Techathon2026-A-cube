@@ -73,9 +73,26 @@
   // Clock & Office Hours
   // ═════════════════════════════════════════════════════════════════════════
 
+  let manualTime = null; // Will store a Date object if user overrides
+
   function tickClock() {
-    const now = new Date();
-    $clock.textContent = now.toLocaleTimeString("en-US", { hour12: true });
+    let now;
+    if (manualTime) {
+      // Increment manualTime by 1 second
+      manualTime = new Date(manualTime.getTime() + 1000);
+      now = manualTime;
+      $clock.classList.add("simulated");
+      $clock.title = "Manual Time active. Click to edit, double-click to reset.";
+    } else {
+      now = new Date();
+      $clock.classList.remove("simulated");
+      $clock.title = "Click to set manual time";
+    }
+
+    // Only update text content if we're not currently editing
+    if (!$clock.querySelector('.clock-input')) {
+      $clock.textContent = now.toLocaleTimeString("en-US", { hour12: true });
+    }
 
     const h = now.getHours();
     const inOffice = h >= OFFICE_START && h < OFFICE_END;
@@ -83,6 +100,85 @@
     $officeText.textContent = inOffice ? "Office Hours" : "After Hours";
     $officeHours.className  = `badge ${inOffice ? "badge-success" : "badge-danger"}`;
   }
+
+  // Handle single click to edit
+  $clock.addEventListener("click", () => {
+    if ($clock.querySelector('.clock-input')) return;
+
+    const now = manualTime || new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+
+    const input = document.createElement("input");
+    input.type = "time";
+    input.className = "clock-input";
+    input.value = `${hrs}:${mins}`;
+
+    // Inline styling to fit badge perfectly
+    input.style.background = "transparent";
+    input.style.border = "none";
+    input.style.color = "var(--text-primary)";
+    input.style.fontFamily = "inherit";
+    input.style.fontSize = "inherit";
+    input.style.fontWeight = "inherit";
+    input.style.outline = "none";
+    input.style.width = "75px";
+    input.style.textAlign = "center";
+    input.style.cursor = "text";
+
+    $clock.innerHTML = "";
+    $clock.appendChild(input);
+    input.focus();
+
+    // Prevent propagation
+    input.addEventListener("click", (e) => e.stopPropagation());
+
+    const syncTimeWithBackend = (timeStr) => {
+      const url = timeStr ? `${httpBase}/api/set-time?time=${timeStr}` : `${httpBase}/api/set-time`;
+      fetch(url, { method: "POST" })
+        .then(r => r.json())
+        .catch(console.error);
+    };
+
+    const saveTime = () => {
+      const val = input.value;
+      if (val === "") {
+        manualTime = null;
+        syncTimeWithBackend(null);
+      } else {
+        const [hours, minutes] = val.split(":").map(Number);
+        const temp = new Date();
+        temp.setHours(hours);
+        temp.setMinutes(minutes);
+        temp.setSeconds(0);
+        manualTime = temp;
+        syncTimeWithBackend(val);
+      }
+      $clock.innerHTML = "";
+      tickClock();
+    };
+
+    input.addEventListener("blur", saveTime);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        saveTime();
+      } else if (e.key === "Escape") {
+        $clock.innerHTML = "";
+        tickClock();
+      }
+    });
+  });
+
+  // Handle double click to reset
+  $clock.addEventListener("dblclick", () => {
+    manualTime = null;
+    const url = `${httpBase}/api/set-time`;
+    fetch(url, { method: "POST" })
+      .then(r => r.json())
+      .catch(console.error);
+    tickClock();
+  });
+
   setInterval(tickClock, 1000);
   tickClock();
 

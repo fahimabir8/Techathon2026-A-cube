@@ -226,6 +226,25 @@ body {
   padding: 6px 16px;
   border-radius: 100px;
   border: var(--glass-border);
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), color var(--transition);
+  user-select: none;
+}
+
+.clock:hover {
+  border-color: var(--accent-indigo);
+  color: var(--text-primary);
+}
+
+.clock.simulated {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+}
+
+.clock.simulated:hover {
+  border-color: var(--accent-rose);
+  color: var(--accent-rose);
 }
 
 

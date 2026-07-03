@@ -15,6 +15,8 @@ from backend.config import (
     DEVICE_SPECS,
     SIMULATION_MIN_INTERVAL,
     SIMULATION_MAX_INTERVAL,
+    OFFICE_HOURS_START,
+    OFFICE_HOURS_END,
 )
 from backend import database as db
 
@@ -39,13 +41,18 @@ async def run_simulator() -> None:
     """Main simulation loop — runs forever as an asyncio background task."""
     logger.info("🔄 Device simulator started")
 
-    # ── Warm-up: randomly turn ON ~7 devices so the dashboard is interesting ──
-    all_devices = list(db.devices.values())
-    for device in random.sample(all_devices, k=min(7, len(all_devices))):
-        device.status = True
-        base = DEVICE_SPECS[device.type.value]["base_power"]
-        device.power_draw = round(base * random.uniform(0.85, 1.15), 2)
-        device.last_changed = datetime.now(timezone.utc)
+    # Determine initial office hours status
+    now_local = db.get_current_time()
+    was_office_hours = (OFFICE_HOURS_START <= now_local.hour < OFFICE_HOURS_END)
+
+    # ── Warm-up: randomly turn ON ~7 devices so the dashboard is interesting (only if in office hours) ──
+    if was_office_hours:
+        all_devices = list(db.devices.values())
+        for device in random.sample(all_devices, k=min(7, len(all_devices))):
+            device.status = True
+            base = DEVICE_SPECS[device.type.value]["base_power"]
+            device.power_draw = round(base * random.uniform(0.85, 1.15), 2)
+            device.last_changed = db.get_current_utc_time()
 
     # Push initial full state to any already-connected WS client
     if _broadcast_callback:
@@ -53,13 +60,43 @@ async def run_simulator() -> None:
 
     # ── Main loop ─────────────────────────────────────────────────────────────
     while True:
+        # Check office hours at each tick before determining simulation interval
+        now_local = db.get_current_time()
+        is_office_hours = (OFFICE_HOURS_START <= now_local.hour < OFFICE_HOURS_END)
+
+        if not is_office_hours:
+            if was_office_hours:
+                # Transition: Office hours just ended. Stop automatic simulator toggles.
+                logger.info("🕒 Office hours ended. Stopping automatic simulator toggles.")
+                if _alert_check_callback:
+                    await _alert_check_callback()
+                if _broadcast_callback:
+                    await _broadcast_callback("full_state")
+                was_office_hours = False
+
+            # Outside office hours: sleep 1 second and check again.
+            await asyncio.sleep(1)
+            continue
+
+        # If office hours:
+        if not was_office_hours:
+            # Transition: Office hours just started.
+            logger.info("🕒 Office hours started. Resuming automatic simulator toggles.")
+            was_office_hours = True
+
+        # Normal simulation tick
         interval = random.uniform(SIMULATION_MIN_INTERVAL, SIMULATION_MAX_INTERVAL)
         await asyncio.sleep(interval)
 
         try:
+            # Recheck office hours after sleep
+            now_local = db.get_current_time()
+            if not (OFFICE_HOURS_START <= now_local.hour < OFFICE_HOURS_END):
+                continue
+
             device = random.choice(list(db.devices.values()))
             device.status = not device.status
-            device.last_changed = datetime.now(timezone.utc)
+            device.last_changed = db.get_current_utc_time()
 
             if device.status:
                 base = DEVICE_SPECS[device.type.value]["base_power"]
