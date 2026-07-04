@@ -15,6 +15,8 @@ class Alerts(commands.Cog):
         self.bot = bot
         # first run: only show alerts from now onward
         self.last_alert_time = self._now_iso()
+
+    async def cog_load(self):
         self.alert_loop.start()
 
     async def cog_unload(self):
