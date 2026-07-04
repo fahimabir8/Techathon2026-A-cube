@@ -127,8 +127,34 @@ def get_all_alerts() -> list[Alert]:
     return sorted(alerts, key=lambda a: a.timestamp, reverse=True)
 
 
+def get_alerts_by_time_range(
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[Alert]:
+    """Return alerts that were active (running/pending) at any point during [start, end].
+
+    An alert was active during [start, end] if:
+      - It started at or before the end of the query window (timestamp <= end)
+      - And it did not resolve before the start of the query window (resolved_at is None or resolved_at >= start)
+    """
+    if end is None:
+        end = get_current_utc_time()
+
+    result: list[Alert] = []
+    for a in alerts:
+        if start and a.resolved_at and a.resolved_at < start:
+            continue
+        if a.timestamp > end:
+            continue
+        result.append(a)
+
+    return sorted(result, key=lambda a: a.timestamp, reverse=True)
+
+
 def resolve_alerts_for_condition(room: str, keyword: str) -> None:
     """Resolve all active alerts for *room* whose message contains *keyword*."""
+    now_utc = get_current_utc_time()
     for alert in alerts:
         if not alert.resolved and alert.room == room and keyword in alert.message:
             alert.resolved = True
+            alert.resolved_at = now_utc

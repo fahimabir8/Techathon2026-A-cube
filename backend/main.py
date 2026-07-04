@@ -211,9 +211,39 @@ async def api_power():
 
 
 @app.get("/api/alerts")
-async def api_alerts():
-    """All alerts (newest first)."""
-    return [a.model_dump(mode="json") for a in db.get_all_alerts()]
+async def api_alerts(
+    start: str | None = None,
+    end: str | None = None,
+    time: str | None = None,
+):
+    """All alerts (newest first). Supports optional start, end, or time filtering."""
+    parsed_start = None
+    parsed_end = None
+    parsed_time = None
+
+    try:
+        if start:
+            parsed_start = datetime.fromisoformat(start)
+            if parsed_start.tzinfo is None:
+                parsed_start = parsed_start.replace(tzinfo=timezone.utc)
+        if end:
+            parsed_end = datetime.fromisoformat(end)
+            if parsed_end.tzinfo is None:
+                parsed_end = parsed_end.replace(tzinfo=timezone.utc)
+        if time:
+            parsed_time = datetime.fromisoformat(time)
+            if parsed_time.tzinfo is None:
+                parsed_time = parsed_time.replace(tzinfo=timezone.utc)
+    except ValueError as e:
+        raise HTTPException(400, f"Invalid timestamp format: {e}. Use ISO-8601 (e.g. 2026-07-04T08:00:00Z)")
+
+    if parsed_time:
+        # Return alerts active at the specified timestamp
+        results = db.get_alerts_by_time_range(start=parsed_time, end=parsed_time)
+    else:
+        results = db.get_alerts_by_time_range(start=parsed_start, end=parsed_end)
+
+    return [a.model_dump(mode="json") for a in results]
 
 
 @app.post("/api/set-time")
