@@ -5,10 +5,28 @@ Holds the authoritative state for all 15 devices and alerts.
 Every component (API, simulator, bot) reads/writes through these functions.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from backend.config import ROOMS, DEVICE_SPECS
 from backend.models import Device, Alert, DeviceType
+
+# ── Time offset management for manual override ──────────────────────────────
+time_offset: timedelta | None = None
+
+def set_time_offset(offset: timedelta | None) -> None:
+    global time_offset
+    time_offset = offset
+
+def get_current_time() -> datetime:
+    if time_offset is not None:
+        return datetime.now() + time_offset
+    return datetime.now()
+
+def get_current_utc_time() -> datetime:
+    if time_offset is not None:
+        return datetime.now(timezone.utc) + time_offset
+    return datetime.now(timezone.utc)
+
 
 
 # ── In-memory stores ──────────────────────────────────────────────────────────
@@ -45,7 +63,7 @@ def init_devices() -> None:
                     room=room,
                     status=False,
                     power_draw=0.0,
-                    last_changed=datetime.now(timezone.utc),
+                    last_changed=get_current_utc_time(),
                 )
 
 

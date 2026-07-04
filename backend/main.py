@@ -63,7 +63,7 @@ def _full_state() -> dict:
             "power":     db.get_power_summary(),
             "alerts":    [a.model_dump(mode="json") for a in db.get_active_alerts()],
             "rooms":     [_room_summary(r) for r in ROOMS],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": db.get_current_utc_time().isoformat(),
         },
     }
 
@@ -216,6 +216,26 @@ async def api_alerts():
     return [a.model_dump(mode="json") for a in db.get_all_alerts()]
 
 
+@app.post("/api/set-time")
+async def api_set_time(time: str | None = None):
+    """Set manual time override or reset to system time."""
+    if not time:
+        db.set_time_offset(None)
+    else:
+        try:
+            hours, minutes = map(int, time.split(":"))
+            now_local = datetime.now()
+            target_local = now_local.replace(hour=hours, minute=minutes, second=0, microsecond=0)
+            offset = target_local - now_local
+            db.set_time_offset(offset)
+        except Exception as e:
+            raise HTTPException(400, f"Invalid time format: {e}. Use HH:MM")
+
+    await check_all_alerts()
+    await broadcast("full_state")
+    return {"status": "ok", "current_time": db.get_current_time().isoformat()}
+
+
 @app.get("/api/room/{room_name}")
 async def api_room(room_name: str):
     """Single room detail view with device list."""
@@ -240,7 +260,7 @@ async def api_toggle(device_id: str):
         raise HTTPException(404, f"Device '{device_id}' not found")
 
     device.status = not device.status
-    device.last_changed = datetime.now(timezone.utc)
+    device.last_changed = db.get_current_utc_time()
 
     if device.status:
         base = DEVICE_SPECS[device.type.value]["base_power"]
@@ -277,7 +297,7 @@ async def ws_endpoint(ws: WebSocket):
                     device = db.get_device(msg["device_id"])
                     if device:
                         device.status = not device.status
-                        device.last_changed = datetime.now(timezone.utc)
+                        device.last_changed = db.get_current_utc_time()
                         if device.status:
                             base = DEVICE_SPECS[device.type.value]["base_power"]
                             device.power_draw = round(
