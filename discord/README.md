@@ -1,3 +1,5 @@
+<img width="507" height="162" alt="image" src="https://github.com/user-attachments/assets/c1c159e2-0779-4108-8e34-704201b470fe" />
+
 # usage
 should work via `uv run bot.py`. well add your `.env` vars first
 
