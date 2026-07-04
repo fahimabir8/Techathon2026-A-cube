@@ -61,7 +61,7 @@ async def _check_office_hours() -> None:
                 alert = Alert(
                     id=str(uuid.uuid4()),
                     message=msg,
-                    timestamp=db.get_current_utc_time(),
+                    timestamp=db.get_current_time(),
                     room=room,
                     severity=Severity.WARNING,
                 )
