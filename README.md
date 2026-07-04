@@ -67,6 +67,9 @@
 git clone https://github.com/your-team/Techathon2026-A-cube.git
 cd Techathon2026-A-cube
 
+#install uv 
+pip install uv
+
 # Install dependencies with uv
 uv sync
 ```
@@ -77,14 +80,21 @@ uv sync
 cp .env.example .env
 
 #.env example 
+TOKEN="rtenmraengmen"
+BACKEND_API="http://127.0.0.1:8080/api"
 
+AI_API=http://localhost:11434/v1/chat/completions
+AI_MODEL_INTENT=discord-intent
+AI_MODEL_RESPOND=discord-respond
+ALERT_CHANNEL_ID="1391205043457491044"
+AI_CHANNEL_ID="1391205043457491044"
 ```
 
 ### 3. Run
 
 ```bash
 # Using uv
-uv run fastapi dev main.py
+uv run main.py
 # Or with uvicorn
 uvicorn backend.main:app --reload
 ```
@@ -356,6 +366,17 @@ Techathon2026-A-cube/
 ├── backend/
 │   ├── __init__.py        # Package marker
 │   ├── config.py          # Environment & constants
+|   discord/
+|    ├── .env.example
+|    ├── .gitignore
+|    ├── ai.py
+|    ├── alert.py
+|    ├── bot.py
+|    ├── cmd.py
+|    ├── Modelfile.intent
+|    ├── Modelfile.respond
+|    ├── README.md
+|    └── docs/
 │   ├── models.py          # Pydantic data models
 │   ├── database.py        # In-memory device/alert store
 │   ├── simulator.py       # Background device toggling
