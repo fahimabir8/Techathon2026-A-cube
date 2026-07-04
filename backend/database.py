@@ -7,27 +7,34 @@ Every component (API, simulator, bot) reads/writes through these functions.
 
 from datetime import datetime, timezone, timedelta
 
+from zoneinfo import ZoneInfo
 from backend.config import ROOMS, DEVICE_SPECS
 from backend.models import Device, Alert, DeviceType
 
 # ── Time offset management for manual override ──────────────────────────────
 time_offset: timedelta | None = None
 
+DHAKA = ZoneInfo("Asia/Dhaka")
+
 def set_time_offset(offset: timedelta | None) -> None:
     global time_offset
     time_offset = offset
 
 def get_current_time() -> datetime:
+    now = datetime.now(DHAKA)
+
     if time_offset is not None:
-        return datetime.now() + time_offset
-    return datetime.now()
+        return now + time_offset
+
+    return now
 
 def get_current_utc_time() -> datetime:
+    now = datetime.now(timezone.utc)
+
     if time_offset is not None:
-        return datetime.now(timezone.utc) + time_offset
-    return datetime.now(timezone.utc)
+        return now + time_offset
 
-
+    return now
 
 # ── In-memory stores ──────────────────────────────────────────────────────────
 devices: dict[str, Device] = {}
