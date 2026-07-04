@@ -49,7 +49,7 @@ class CmdCog(commands.Cog):
                 resp.raise_for_status()
                 data = await resp.json()
                 await fmsg.edit(content="humanizing")
-                ai_resp = await self.bot.ai_handler.humanize("status", data)
+                ai_resp = await self.bot.ai_handler.humanize("usage", data)
                 await fmsg.edit(content=ai_resp["message"])
         except Exception as e:
             await fmsg.edit(content=f"error: {e}")
