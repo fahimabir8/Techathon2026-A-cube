@@ -59,4 +59,4 @@ class Alerts(commands.Cog):
 
 
 async def setup(bot: UsageBot):
-    await bot.add_cog(Alerts(UsageBot))
+    await bot.add_cog(Alerts(UsageBot()))
