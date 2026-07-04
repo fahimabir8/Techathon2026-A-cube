@@ -23,7 +23,6 @@ class CmdCog(commands.Cog):
                 data = await resp.json()
                 await fmsg.edit(content="humanizing")
                 ai_resp = await self.bot.ai_handler.humanize("status", data)
-                print(type(ai_resp))
                 await fmsg.edit(content=ai_resp["message"])
         except Exception as e:
             await fmsg.edit(content=f"error: {e}")
@@ -56,18 +55,14 @@ class CmdCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        print("message")
         if message.author.bot:
-            print("bot")
             return
         if message.channel.id != int(AI_CHANNEL_ID):
-            print("not channel", message.channel.id)
             return
 
         ctx = await self.bot.get_context(message)
         if ctx.valid:
             return
-        print("running ai")
         try:
             intent = await self.bot.ai_handler.get_intent(message.content)
         except Exception as e:
