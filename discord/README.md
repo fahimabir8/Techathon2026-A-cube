@@ -4,7 +4,7 @@ should work via `uv run bot.py`. well add your `.env` vars first
 # AI (openai compatible api)
 ai is uesd for two task. first usage is too humanize output as the rulebook encouraged. second is to detect user message as command. so that boss doesnt have to write "!usage", or "!room work2". he can just say "update me on 2nd room".
 
-oh and it also suggest me keyword for gif. which then fetched randomly from **giphy** (thanks for free api lol).
+oh and it also suggest me keyword for gif. which then fetched randomly from **giphy** (thanks for free api lol). (well couldn't implement this for time hehe, but it does output a json key `gif_keyword` in humanize output)
 
 ## local stack
 used local open source llm via ollama. my laptop has no gpu, so not a great model chosen. the model with system prompt is written in `Modelfile`. change model if you have better pc. then run 
