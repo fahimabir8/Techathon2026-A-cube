@@ -44,6 +44,7 @@ class Alert(BaseModel):
     room: str
     severity: Severity = Severity.WARNING
     resolved: bool = False
+    resolved_at: datetime | None = None
 
 
 # ── API Response Models ───────────────────────────────────────────────────────
