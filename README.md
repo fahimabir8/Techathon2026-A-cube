@@ -1,4 +1,4 @@
-# 🏢 Smart Office Monitor
+# 🏢 Smart Office Monitoring System
 
 > **Techathon 2026 — Team A-Cube**
 >
@@ -67,7 +67,7 @@
 git clone https://github.com/your-team/Techathon2026-A-cube.git
 cd Techathon2026-A-cube
 
-#install uv 
+#install uv (if you don't have)
 pip install uv
 
 # Install dependencies with uv
@@ -125,17 +125,23 @@ For deploying the project to cloud platforms (such as **Vercel**), please refer 
 
 ---
 
-## 🤖 Discord Bot Commands
 
-| Command | Description |
-|---------|-------------|
-| `!status` | Office-wide device summary |
-| `!room <name>` | Detail for one room (`drawing`, `work1`, `work2`) |
-| `!usage` | Current power & estimated daily kWh |
+# discord
+## command usage
+you can use straight up prefix commnds.
+1. `!status` - show all room status
+2. `!room <room>` - show details on a specific room
+3. `!usage` - show current power consumption
 
-Set `DISCORD_TOKEN` and `DISCORD_CHANNEL_ID` in `.env` for auto-posted alert notifications.
+this commands are taken from rulebook. 
+## ai
+you can use natural english instead of commands. for example:
+<img width="507" height="162" alt="image" src="https://github.com/user-attachments/assets/c1c159e2-0779-4108-8e34-704201b470fe" />
 
-Also we have implemented AI to humanize bot's responses. A separate channel can be used to talk directly and get AI generated response from user.
+## deployment
+i used ollama in my old laptop without gpu. i had to run two distinct model for getting accurate data output. you can use one single model with better system prompt. for a one day hackathon, i dont have that much energy. 
+
+modelfile are included in `/discord` directory. and better documentation given in `/discord/readme`.
 
 ---
 
@@ -149,6 +155,8 @@ Both thresholds are configurable via environment variables (see `.env.example`).
 ---
 # ESP32 Room Simulation
 
+
+
 This project simulates one office room consisting of **2 fans** and **3 lights** using an ESP32.
 
 Each device is represented by:
@@ -160,34 +168,9 @@ The ESP32 communicates with the FastAPI backend over Wi-Fi. Whenever a button is
 
 ---
 
-# Architecture
+![Hardware Schematic](hardware%20schematic/schematic.png)
 
-```
-              Button Press
-                    │
-                    ▼
-                 ESP32
-                    │
-      POST /api/devices/{id}/toggle
-                    │
-                    ▼
-            FastAPI Backend
-                    │
-        ┌───────────┼────────────┐
-        │           │            │
-        ▼           ▼            ▼
-     Database   Web Dashboard  Discord Bot
-                    ▲
-                    │
-        GET /api/devices (1 second)
-                    │
-                    ▼
-                 ESP32 LEDs
-```
-
----
-
-# Device Mapping
+## Device Mapping
 
 | Device | Device ID | LED Pin | Button Pin |
 |---------|-----------|---------|------------|
@@ -199,166 +182,6 @@ The ESP32 communicates with the FastAPI backend over Wi-Fi. Whenever a button is
 
 ---
 
-# ESP32 Pin Diagram
-
-```
-                ESP32 DEVKIT V1
-
-           +-----------------------+
-
-GPIO21 -------------------- LED 1 (Fan 1)
-
-GPIO5  -------------------- LED 2 (Fan 2)
-
-GPIO17 -------------------- LED 3 (Light 1)
-
-GPIO2  -------------------- LED 4 (Light 2)
-
-GPIO15 -------------------- LED 5 (Light 3)
-
-
-
-GPIO34 <------------------- Push Button 1
-
-GPIO35 <------------------- Push Button 2
-
-GPIO25 <------------------- Push Button 3
-
-GPIO27 <------------------- Push Button 4
-
-GPIO13 <------------------- Push Button 5
-
-           +-----------------------+
-```
-
----
-
-# Button Wiring
-
-Each button is connected as:
-
-```
-3.3V
- │
- │
-Button
- │
-GPIOxx
- │
-10kΩ
- │
-GND
-```
-
-Alternatively, use the ESP32's internal pull-up resistor by configuring:
-
-```cpp
-pinMode(pin, INPUT_PULLUP);
-```
-
-Then wire the button between the GPIO pin and GND.
-
----
-
-# LED Wiring
-
-Each LED should be connected with a current-limiting resistor.
-
-```
-GPIOxx
- │
-220Ω
- │
-LED (+)
-LED (-)
- │
-GND
-```
-
----
-
-# API Communication
-
-### Toggle Device
-
-```
-POST /api/devices/{device_id}/toggle
-```
-
-Example
-
-```
-POST /api/devices/fan_work1_1/toggle
-```
-
----
-
-### Synchronize Device States
-
-```
-GET /api/devices
-```
-
-Example Response
-
-```json
-[
-    {
-        "id": "fan_work1_1",
-        "status": true
-    },
-    {
-        "id": "fan_work1_2",
-        "status": false
-    },
-    {
-        "id": "light_work1_1",
-        "status": true
-    }
-]
-```
-
-The ESP32 polls this endpoint every second to keep the LEDs synchronized with the backend.
-
----
-
-# Room Devices
-
-```
-Work Room 1
-
-├── Fan 1
-├── Fan 2
-├── Light 1
-├── Light 2
-└── Light 3
-```
-
----
-
-# Hardware Components
-
-- ESP32 DevKit V1
-- 5 × LEDs
-- 5 × 220Ω Resistors
-- 5 × Push Buttons
-- 5 × 10kΩ Resistors (if not using INPUT_PULLUP)
-- Breadboard
-- Jumper Wires
-- USB Cable
-
----
-
-# Notes
-
-- The backend is the **single source of truth**.
-- LEDs never determine the actual device state.
-- Button presses only send toggle requests.
-- The dashboard, Discord bot, and ESP32 always stay synchronized through the backend.
-- This hardware setup represents **one room**. The remaining rooms are simulated by the backend using the same device model.
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -366,7 +189,7 @@ Techathon2026-A-cube/
 ├── backend/
 │   ├── __init__.py        # Package marker
 │   ├── config.py          # Environment & constants
-|   discord/
+├── discord/
 |    ├── .env.example
 |    ├── .gitignore
 |    ├── ai.py
