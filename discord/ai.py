@@ -18,11 +18,10 @@ class AiHandler:
         assert isinstance(URL, str)
         async with self.session.post(URL, json=payload) as resp:
             resp.raise_for_status()
-            r = await resp.json()
-            r = r["choices"][0]["message"]["content"]
-            print("ai output:", r)
-            print(type(r))
-            return r
+            raw = await resp.json()
+            ai_content = raw["choices"][0]["message"]["content"]
+            ai_dict = json.loads(ai_content)
+            return ai_dict
 
     async def get_intent(self, prompt: str):
         payload = {
@@ -40,5 +39,4 @@ class AiHandler:
             "temperature": 0.2,
             "response_format": {"type": "json_object"},
         }
-        print("running query: ", payload)
         return await self.query(payload)

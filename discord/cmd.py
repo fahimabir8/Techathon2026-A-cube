@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 from bot import UsageBot
 import os
@@ -5,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 BACKEND_API = os.getenv("BACKEND_API")
+AI_CHANNEL_ID = os.getenv("AI_CHANNEL_ID")
 
 
 class CmdCog(commands.Cog):
@@ -51,6 +53,43 @@ class CmdCog(commands.Cog):
                 await fmsg.edit(content=ai_resp["message"])
         except Exception as e:
             await fmsg.edit(content=f"error: {e}")
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        print("message")
+        if message.author.bot:
+            print("bot")
+            return
+        if message.channel.id != int(AI_CHANNEL_ID):
+            print("not channel", message.channel.id)
+            return
+
+        ctx = await self.bot.get_context(message)
+        if ctx.valid:
+            return
+        print("running ai")
+        try:
+            intent = await self.bot.ai_handler.get_intent(message.content)
+        except Exception as e:
+            await message.reply(f"error: {e}")
+
+        command_name = intent.get("command")
+        room = intent.get("room")
+        command = self.bot.get_command(command_name)
+        if command is None:
+            await message.reply("couldn't figure out what you are asking")
+            return
+
+        try:
+            if command_name == "room":
+                if not room:
+                    await message.reply("no room specified")
+                    return
+                await ctx.invoke(command, room=room)
+            else:
+                await ctx.invoke(command)
+        except Exception as e:
+            await message.reply(f"error running command: {e}")
 
 
 async def setup(bot: UsageBot):
